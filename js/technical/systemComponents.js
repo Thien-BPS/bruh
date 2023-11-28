@@ -1,4 +1,4 @@
-var systemComponents = {
+export var systemComponents = {
 	'tab-buttons': {
 		props: ['layer', 'data', 'name'],
 		template: `

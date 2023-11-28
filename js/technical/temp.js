@@ -1,6 +1,9 @@
-var tmp = {}
-var temp = tmp // Proxy for tmp
-var funcs = {}
+import doNotCallTheseFunctionsEveryTick from "../mod.js"
+import { layers, decimalZero, decimalOne } from "./layerSupport.js"
+
+export var tmp = {}
+export var temp = tmp // Proxy for tmp
+export var funcs = {}
 var NaNalert = false;
 
 // Tmp will not call these

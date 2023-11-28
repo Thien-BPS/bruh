@@ -1,7 +1,7 @@
 // ************ Themes ************
-var themes = ["default", "aqua"]
+export var themes = ["default", "aqua"]
 
-var colors = {
+export var colors = {
 	default: {
 		1: "#ffffff",//Branch color 1
 		2: "#bfbfbf",//Branch color 2
@@ -23,7 +23,7 @@ var colors = {
 		background_tooltip: "rgba(0, 15, 31, 0.75)",
 	},
 }
-function changeTheme() {
+export function changeTheme() {
 
 	colors_theme = colors[options.theme || "default"];
 	document.body.style.setProperty('--background', colors_theme["background"]);
@@ -32,11 +32,11 @@ function changeTheme() {
 	document.body.style.setProperty('--points', colors_theme["points"]);
 	document.body.style.setProperty("--locked", colors_theme["locked"]);
 }
-function getThemeName() {
+export function getThemeName() {
 	return options.theme? options.theme : "default";
 }
 
-function switchTheme() {
+export function switchTheme() {
 	let index = themes.indexOf(options.theme)
 	if (options.theme === null || index >= themes.length-1 || index < 0) {
 		options.theme = themes[0];

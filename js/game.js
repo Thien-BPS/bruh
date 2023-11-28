@@ -1,13 +1,14 @@
-var player;
-var needCanvasUpdate = true;
+export var player;
+export var needCanvasUpdate = true;
+export var ticking = false
 
 // Don't change this
-const TMT_VERSION = {
+export const TMT_VERSION = {
 	tmtNum: "2.6.6.2",
 	tmtName: "Fixed Reality"
 }
 
-function getResetGain(layer, useType = null) {
+export function getResetGain(layer, useType = null) {
 	let type = useType
 	if (!useType){ 
 		type = tmp[layer].type
@@ -35,7 +36,7 @@ function getResetGain(layer, useType = null) {
 	}
 }
 
-function getNextAt(layer, canMax=false, useType = null) {
+export function getNextAt(layer, canMax=false, useType = null) {
 	let type = useType
 	if (!useType) {
 		type = tmp[layer].type
@@ -69,14 +70,14 @@ function getNextAt(layer, canMax=false, useType = null) {
 		return decimalZero
 	}}
 
-function softcap(value, cap, power = 0.5) {
+export function softcap(value, cap, power = 0.5) {
 	if (value.lte(cap)) return value
 	else
 		return value.pow(power).times(cap.pow(decimalOne.sub(power)))
 }
 
 // Return true if the layer should be highlighted. By default checks for upgrades only.
-function shouldNotify(layer){
+export function shouldNotify(layer){
 	for (id in tmp[layer].upgrades){
 		if (isPlainObject(layers[layer].upgrades[id])){
 			if (canAffordUpgrade(layer, id) && !hasUpgrade(layer, id) && tmp[layer].upgrades[id].unlocked){
@@ -114,7 +115,7 @@ function shouldNotify(layer){
 	
 }
 
-function canReset(layer)
+export function canReset(layer)
 {	
 	if (layers[layer].canReset!== undefined)
 		return run(layers[layer].canReset, layers[layer])
@@ -126,7 +127,7 @@ function canReset(layer)
 		return false
 }
 
-function rowReset(row, layer) {
+export function rowReset(row, layer) {
 	for (lr in ROW_LAYERS[row]){
 		if(layers[lr].doReset) {
 			if (!isNaN(row)) Vue.set(player[lr], "activeChallenge", null) // Exit challenges on any row reset on an equal or higher row
@@ -137,7 +138,7 @@ function rowReset(row, layer) {
 	}
 }
 
-function layerDataReset(layer, keep = []) {
+export function layerDataReset(layer, keep = []) {
 	let storedData = {unlocked: player[layer].unlocked, forceTooltip: player[layer].forceTooltip, noRespecConfirm: player[layer].noRespecConfirm, prevTab:player[layer].prevTab} // Always keep these
 
 	for (thing in keep) {
@@ -162,17 +163,17 @@ function layerDataReset(layer, keep = []) {
 
 
 
-function addPoints(layer, gain) {
+export function addPoints(layer, gain) {
 	player[layer].points = player[layer].points.add(gain).max(0)
 	if (player[layer].best) player[layer].best = player[layer].best.max(player[layer].points)
 	if (player[layer].total) player[layer].total = player[layer].total.add(gain)
 }
 
-function generatePoints(layer, diff) {
+export function generatePoints(layer, diff) {
 	addPoints(layer, tmp[layer].resetGain.times(diff))
 }
 
-function doReset(layer, force=false) {
+export function doReset(layer, force=false) {
 	if (tmp[layer].type == "none") return
 	let row = tmp[layer].row
 	if (!force) {
@@ -228,7 +229,7 @@ function doReset(layer, force=false) {
 	updateTemp()
 }
 
-function resetRow(row) {
+export function resetRow(row) {
 	if (prompt('Are you sure you want to reset this row? It is highly recommended that you wait until the end of your current run before doing this! Type "I WANT TO RESET THIS" to confirm')!="I WANT TO RESET THIS") return
 	let pre_layers = ROW_LAYERS[row-1]
 	let layers = ROW_LAYERS[row]
@@ -244,7 +245,7 @@ function resetRow(row) {
 	resizeCanvas();
 }
 
-function startChallenge(layer, x) {
+export function startChallenge(layer, x) {
 	let enter = false
 	if (!player[layer].unlocked || !tmp[layer].challenges[x].unlocked) return
 	if (player[layer].activeChallenge == x) {
@@ -261,7 +262,7 @@ function startChallenge(layer, x) {
 	updateChallengeTemp(layer)
 }
 
-function canCompleteChallenge(layer, x)
+export function canCompleteChallenge(layer, x)
 {
 	if (x != player[layer].activeChallenge) return
 	let challenge = tmp[layer].challenges[x]
@@ -286,7 +287,7 @@ function canCompleteChallenge(layer, x)
 
 }
 
-function completeChallenge(layer, x) {
+export function completeChallenge(layer, x) {
 	var x = player[layer].activeChallenge
 	if (!x) return
 	
@@ -311,14 +312,14 @@ VERSION.withoutName = "v" + VERSION.num + (VERSION.pre ? " Pre-Release " + VERSI
 VERSION.withName = VERSION.withoutName + (VERSION.name ? ": " + VERSION.name : "")
 
 
-function autobuyUpgrades(layer){
+export function autobuyUpgrades(layer){
 	if (!tmp[layer].upgrades) return
 	for (id in tmp[layer].upgrades)
 		if (isPlainObject(tmp[layer].upgrades[id]) && (layers[layer].upgrades[id].canAfford === undefined || layers[layer].upgrades[id].canAfford() === true))
 			buyUpg(layer, id) 
 }
 
-function gameLoop(diff) {
+export function gameLoop(diff) {
 	if (isEndgame() || tmp.gameEnded){
 		tmp.gameEnded = true
 		clearParticles()
@@ -383,7 +384,7 @@ function gameLoop(diff) {
 
 }
 
-function hardReset(resetOptions) {
+export function hardReset(resetOptions) {
 	if (!confirm("Are you sure you want to do this? You will lose all your progress!")) return
 	player = null
 	if(resetOptions) options = null
@@ -391,40 +392,52 @@ function hardReset(resetOptions) {
 	window.location.reload();
 }
 
-var ticking = false
+export default class intervals {
+	stop() {
+		clearInterval(this.gameInterval)
+		clearInterval(this.canvas)
+	}
 
-var interval = setInterval(function() {
-	if (player===undefined||tmp===undefined) return;
-	if (ticking) return;
-	if (tmp.gameEnded&&!player.keepGoing) return;
-	ticking = true
-	let now = Date.now()
-	let diff = (now - player.time) / 1e3
-	let trueDiff = diff
-	if (player.offTime !== undefined) {
-		if (player.offTime.remain > modInfo.offlineLimit * 3600) player.offTime.remain = modInfo.offlineLimit * 3600
-		if (player.offTime.remain > 0) {
-			let offlineDiff = Math.max(player.offTime.remain / 10, diff)
-			player.offTime.remain -= offlineDiff
-			diff += offlineDiff
+	static getDeltaTime(realDiff) {
+		let now = Date.now()
+		let diff = (now - player.time) / 1e3
+		if (player.offTime !== undefined) {
+			if (player.offTime.remain > modInfo.offlineLimit * 3600) player.offTime.remain = modInfo.offlineLimit * 3600
+			if (player.offTime.remain > 0) {
+				let offlineDiff = Math.max(player.offTime.remain / 10, diff)
+				player.offTime.remain -= offlineDiff
+				diff += offlineDiff
+			}
+			if (!options.offlineProd || player.offTime.remain <= 0) player.offTime = undefined
 		}
-		if (!options.offlineProd || player.offTime.remain <= 0) player.offTime = undefined
+		const trueDiff = diff
+		if (player.devSpeed) diff *= player.devSpeed
+		return (realDiff) && realDiff === true ? trueDiff : diff;
 	}
-	if (player.devSpeed) diff *= player.devSpeed
-	player.time = now
-	if (needCanvasUpdate){ resizeCanvas();
-		needCanvasUpdate = false;
-	}
-	tmp.scrolled = document.getElementById('treeTab') && document.getElementById('treeTab').scrollTop > 30
-	updateTemp();
-	updateOomps(diff);
-	updateWidth()
-	updateTabFormats()
-	gameLoop(diff)
-	fixNaNs()
-	adjustPopupTime(trueDiff)
-	updateParticles(trueDiff)
-	ticking = false
-}, 50)
 
-setInterval(function() {needCanvasUpdate = true}, 500)
+	static gameInterval = setInterval(() => {
+		if (player===undefined||tmp===undefined) return;
+		if (this.stopped) return;
+		if (tmp.gameEnded&&!player.keepGoing) return;
+		this.stopped = true
+		player.time = now
+		if (needCanvasUpdate){ resizeCanvas();
+			needCanvasUpdate = false;
+		}
+		const diff = this.getDeltaTime(false);
+		tmp.scrolled = document.getElementById('treeTab') && document.getElementById('treeTab').scrollTop > 30
+		updateTemp();
+		updateOomps(diff);
+		updateWidth()
+		updateTabFormats()
+		gameLoop(diff)
+		fixNaNs()
+		adjustPopupTime(this.getDeltaTime(true))
+		updateParticles(this.getDeltaTime(true))
+		this.stopped = false
+	}, 50)
+
+	static canvas = setInterval(() => {needCanvasUpdate = true}, 500)
+
+	static stopped = false
+}

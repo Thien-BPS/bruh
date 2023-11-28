@@ -1,8 +1,11 @@
 // ************ Options ************
 
-let options = {}
+export let options = {}
+export var styleCooldown = 0;
+export const MS_DISPLAYS = ["ALL", "LAST, AUTO, INCOMPLETE", "AUTOMATION, INCOMPLETE", "INCOMPLETE", "NONE"];
+export const MS_SETTINGS = ["always", "last", "automation", "incomplete", "never"];
 
-function getStartOptions() {
+export function getStartOptions() {
 	return {
 		autosave: true,
 		msDisplay: "always",
@@ -17,7 +20,7 @@ function getStartOptions() {
 	}
 }
 
-function toggleOpt(name) {
+export function toggleOpt(name) {
 	if (name == "oldStyle" && styleCooldown > 0)
 		return;
 
@@ -27,33 +30,29 @@ function toggleOpt(name) {
 	if (name == "oldStyle")
 		updateStyle();
 }
-var styleCooldown = 0;
-function updateStyle() {
+
+export function updateStyle() {
 	styleCooldown = 1;
 	let css = document.getElementById("styleStuff");
 	css.href = options.oldStyle ? "oldStyle.css" : "style.css";
 	needCanvasUpdate = true;
 }
-function changeTreeQuality() {
+export function changeTreeQuality() {
 	var on = options.hqTree;
 	document.body.style.setProperty('--hqProperty1', on ? "2px solid" : "4px solid");
 	document.body.style.setProperty('--hqProperty2a', on ? "-4px -4px 4px rgba(0, 0, 0, 0.25) inset" : "-4px -4px 4px rgba(0, 0, 0, 0) inset");
 	document.body.style.setProperty('--hqProperty2b', on ? "0px 0px 20px var(--background)" : "");
 	document.body.style.setProperty('--hqProperty3', on ? "2px 2px 4px rgba(0, 0, 0, 0.25)" : "none");
 }
-function toggleAuto(toggle) {
+export function toggleAuto(toggle) {
 	Vue.set(player[toggle[0]], [toggle[1]], !player[toggle[0]][toggle[1]]);
 	needCanvasUpdate=true
 }
 
-const MS_DISPLAYS = ["ALL", "LAST, AUTO, INCOMPLETE", "AUTOMATION, INCOMPLETE", "INCOMPLETE", "NONE"];
-
-const MS_SETTINGS = ["always", "last", "automation", "incomplete", "never"];
-
-function adjustMSDisp() {
+export function adjustMSDisp() {
 	options.msDisplay = MS_SETTINGS[(MS_SETTINGS.indexOf(options.msDisplay) + 1) % 5];
 }
-function milestoneShown(layer, id) {
+export function milestoneShown(layer, id) {
 	complete = player[layer].milestones.includes(id);
 	auto = layers[layer].milestones[id].toggles;
 

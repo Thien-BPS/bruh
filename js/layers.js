@@ -1,3 +1,36 @@
+import Decimal from "./technical/break_eternity.js"
+import { player } from "./game.js"
+import * as otherUtils from "./utils/easyAccess.js"
+import Utils from "./utils.js"
+import { addLayer } from "./technical/layerSupport.js"
+
+export class baseLayerState {
+    get layer() {
+        throw new Error("Define it in layers.")
+    }
+
+    get name() {
+        throw new Error("Define it in layers.")
+    }
+    
+    get symbol() {
+        throw new Error("Define it in layers.")
+    }
+
+    get position() {
+        return 0;
+    }
+
+    get startData() {
+        return layers[this.layer].startData
+    }
+
+    set startData() {
+        if ()
+        layers[this.layer].startData = 
+    }
+}
+
 addLayer("p", {
     name: "prestige", // This is optional, only used in a few places, If absent it just uses the layer id.
     symbol: "P", // This appears on the layer's node. Default is the id with the first letter capitalized
@@ -22,7 +55,7 @@ addLayer("p", {
     },
     row: 0, // Row the layer is in on the tree (0 is the first row)
     hotkeys: [
-        {key: "p", description: "P: Reset for prestige points", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
+        {key: "p", description: "P: Reset for prestige points", onPress(){if (Utils.canReset(this.layer)) Utils.doReset(this.layer)}},
     ],
     layerShown(){return true}
 })

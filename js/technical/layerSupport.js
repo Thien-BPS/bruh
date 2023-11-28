@@ -1,13 +1,14 @@
-var layers = {}
+export var layers = {}
+import Decimal from "./break_eternity.js"
 
-const decimalZero = new Decimal(0)
-const decimalOne = new Decimal(1)
-const decimalNaN = new Decimal(NaN)
+export const decimalZero = new Decimal(0)
+export const decimalOne = new Decimal(1)
+export const decimalNaN = new Decimal(NaN)
 
-const defaultGlow = "#ff0000"
+export const defaultGlow = "#ff0000"
 
 
-function layerShown(layer){
+export function layerShown(layer){
     return tmp[layer].layerShown;
 }
 
@@ -15,7 +16,7 @@ var LAYERS = Object.keys(layers);
 
 var hotkeys = {};
 
-var maxRow = 0;
+export var maxRow = 0;
 
 function updateHotkeys()
 {
@@ -34,11 +35,11 @@ function updateHotkeys()
     }
 }
 
-var ROW_LAYERS = {}
-var TREE_LAYERS = {}
-var OTHER_LAYERS = {}
+export var ROW_LAYERS = {}
+export var TREE_LAYERS = {}
+export var OTHER_LAYERS = {}
 
-function updateLayers(){
+export function updateLayers(){
     LAYERS = Object.keys(layers);
     ROW_LAYERS = {}
     TREE_LAYERS = {}
@@ -64,7 +65,7 @@ function updateLayers(){
     updateHotkeys()
 }
 
-function setupLayer(layer){
+export function setupLayer(layer){
     layers[layer].layer = layer
     if (layers[layer].upgrades){
         setRowCol(layers[layer].upgrades)
@@ -211,7 +212,7 @@ function setupLayer(layer){
 }
 
 
-function addLayer(layerName, layerData, tabLayers = null){ // Call this to add layers from a different file!
+export function addLayer(layerName, layerData, tabLayers = null){ // Call this to add layers from a different file!
     layers[layerName] = layerData
     layers[layerName].isLayer = true
     if (tabLayers !== null)
