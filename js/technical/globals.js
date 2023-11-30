@@ -12,6 +12,8 @@ export * from "../utils/easyAccess.js"
 export * from "../utils/NumberFormating.js"
 export * from "../utils/options.js"
 export * from "../utils/save.js"
+export * from "../utils/currency.js"
+export * from "../utils/layersReqs.js"
 
 // js root
 export * from "../game.js"
@@ -20,3 +22,4 @@ export * from "../mod.js"
 export * from "../tree.js"
 export * from "../utils.js"
 export * from "../components.js"
+export * from "../precooked-decimals.js"

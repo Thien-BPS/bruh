@@ -38,12 +38,12 @@ export var backgroundStyle = {
 export var displayThings = [
 ]
 
-export function getStartPoints(){
+export function getStartPoints() {
     return new Decimal(modInfo.initialStartPoints)
 }
 
 // Determines if it should show points/sec
-export function canGenPoints(){
+export function canGenPoints() {
 	return true
 }
 
