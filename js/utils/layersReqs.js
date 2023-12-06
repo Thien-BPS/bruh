@@ -1,5 +1,3 @@
-"use strict";
-
 export function NotImplementedError(message = "") {
     this.name = "NotImplementedError";
     this.message = message;

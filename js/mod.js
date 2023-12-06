@@ -1,6 +1,6 @@
 import Decimal from "./technical/break_eternity.js"
 
-export let modInfo = {
+export const modInfo = {
 	name: "The ??? Tree",
 	id: "mymod",
 	author: "nobody",
@@ -62,7 +62,7 @@ export function addedPlayerData() { return {
 
 // Determines when the game "ends"
 export function isEndgame() {
-	return player.points.gte(new Decimal("e280000000"))
+	return player.points.gte(new Decimal("F1.79e308"))
 }
 
 

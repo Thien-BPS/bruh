@@ -1,5 +1,6 @@
-import { getStartPoints } from "../mod";
+import { getPointGen, getStartPoints } from "../mod";
 import { DC } from "../precooked-decimals";
+import { isDisallowedEntry } from "../utils";
 import { GameMechanicState, NotImplementedError } from "./layersReqs";
 
 class MathOperations {
@@ -26,6 +27,18 @@ class MathOperations {
      */
     // eslint-disable-next-line no-unused-vars
     divide(left, right) { throw new NotImplementedError(); }
+  
+    /**
+     * @abstract
+     */
+    // eslint-disable-next-line no-unused-vars
+    mod(left, right) { throw new NotImplementedError(); }
+  
+    /**
+     * @abstract
+     */
+    // eslint-disable-next-line no-unused-vars
+    pow(left, right) { throw new NotImplementedError(); }
   
     /**
      * @abstract
@@ -75,6 +88,9 @@ class MathOperations {
     subtract(left, right) { return left - right; }
     multiply(left, right) { return left * right; }
     divide(left, right) { return left / right; }
+    mod(left, right) { return left % right }
+    pow(left, right) { return Math.pow(left, right) }
+
     max(left, right) { return Math.max(left, right); }
     min(left, right) { return Math.min(left, right); }
     eq(left, right) { return left === right; }
@@ -85,10 +101,14 @@ class MathOperations {
   }();
   
   MathOperations.decimal = new class DecimalMathOperations extends MathOperations {
-    add(left, right) { return Decimal.add(left, right); }
-    subtract(left, right) { return Decimal.subtract(left, right); }
-    multiply(left, right) { return Decimal.multiply(left, right); }
-    divide(left, right) { return Decimal.divide(left, right); }
+    add(left, right) { return Decimal.plus(left, right); }
+    subtract(left, right) { return Decimal.sub(left, right); }
+    multiply(left, right) { return Decimal.times(left, right); }
+    divide(left, right) { return Decimal.div(left, right); }
+    mod(left, right) { return Decimal.mod(left, right) }
+    root(left, right) { return Decimal.root(left, right) }
+    pow(left, right) { return Decimal.pow(left, right) }
+
     max(left, right) { return Decimal.max(left, right); }
     min(left, right) { return Decimal.min(left, right); }
     eq(left, right) { return Decimal.eq(left, right); }
@@ -96,9 +116,10 @@ class MathOperations {
     gte(left, right) { return Decimal.gte(left, right); }
     lt(left, right) { return Decimal.lt(left, right); }
     lte(left, right) { return Decimal.lte(left, right); }
+    neq(left, right) { return Decimal.neq(left, right); }
   }();
 
-class Currency extends GameMechanicState {
+class InternalCurrencyState extends GameMechanicState {
     get isCustomMechanic() {
         return true;
     }
@@ -129,6 +150,10 @@ class Currency extends GameMechanicState {
     
       divide(amount) {
         this.value = this.operations.divide(this.value, amount);
+      }
+
+      mod(amount) {
+        this.value = this.operations.mod(this.value, amount);
       }
     
       eq(amount) {
@@ -177,46 +202,68 @@ class Currency extends GameMechanicState {
 /**
  * @abstract
  */
-class NumberCurrency extends Currency {
-    get operations() { return MathOperations.number; }
-    get startingValue() { return 0; }
-  }
+class NumberCurrency extends InternalCurrencyState {
+  get operations() { return MathOperations.number; }
+  get startingValue() { return 0; }
+}
   
-  /**
-   * @abstract
-   */
-  class DecimalCurrency extends Currency {
-    get operations() { return MathOperations.decimal; }
-    get mantissa() { return this.value.mantissa; }
-    get exponent() { return this.value.exponent; }
-    get layer() { return this.value.layer; }
-    get mag() { return this.value.mag; }
-    get startingValue() { return DC.D0; }
-  }
-  window.DecimalCurrency = DecimalCurrency;
+/**
+ * @abstract
+ */
+class DecimalCurrency extends InternalCurrencyState {
+  get operations() { return MathOperations.decimal; }
+  get mantissa() { return this.value.mantissa; }
+  get exponent() { return this.value.exponent; }
+  get layer() { return this.value.layer; }
+  get mag() { return this.value.mag; }
+  get startingValue() { return DC.D0; }
+}
 
-export let Currency = {
-    points: new class extends DecimalCurrency {
-        get currencyValue() {
-            return player.points;
-        }
+window.DecimalCurrency = DecimalCurrency;
+window.NumberCurrency = NumberCurrency;
 
-        set currencyValue(value) {
-            player.records.totalPoints = player.records.totalPoints.plus(value);
-            player.records.maximumEverPoints = player.records.maximumEverPoints.max(value);
-            player.points = value;
-        }
+export const Currency = {
+  points: new class extends DecimalCurrency {
+      get currencyValue() {
+          return player.points;
+      }
 
-        get maximum() {
-            return player.records.maximumEverPoints;
-        }
+      set currencyValue(value) {
+          if (isDisallowedEntry(value)) {
+            throw new Error();
+          }
+          player.records.totalPoints = player.records.totalPoints.plus(value);
+          player.records.maximumEverPoints = player.records.maximumEverPoints.max(value);
+          player.points = value;
+      }
 
-        get startsWith() {
-            return getStartPoints();
-        }
+      get maximum() {
+          return player.records.maximumEverPoints;
+      }
 
-        get productionPerSecond() {
-            return;
-        }
-    }
+      get startsWith() {
+          return getStartPoints();
+      }
+
+      get productionPerSecond() {
+          return getPointGen();
+      }
+  },
+  prestigePoints: new class extends DecimalCurrency {
+      get currencyValue() {
+          return player.p.points;
+      }
+
+      set currencyValue(value) {
+          player.p.points = value;
+      }
+
+      get startsWith() {
+          return DC.D0;
+      }
+
+      get productionPerSecond() {
+          return getResetGain("p", "normal");
+      }
+  },
 }

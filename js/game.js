@@ -15,8 +15,8 @@ export function getResetGain(layer, useType = null) {
 		if (layers[layer].getResetGain !== undefined)
 			return layers[layer].getResetGain()
 	} 
-	if(tmp[layer].type == "none")
-		return new Decimal (0)
+	if(tmp[layer].type === "none")
+		return new Decimal(0);
 	if (tmp[layer].gainExp.eq(0)) return decimalZero
 	if (type=="static") {
 		if ((!tmp[layer].canBuyMax) || tmp[layer].baseAmount.lt(tmp[layer].requires)) return decimalOne
@@ -50,7 +50,7 @@ export function getNextAt(layer, canMax=false, useType = null) {
 	if (tmp[layer].gainMult.lte(0)) return new Decimal(Infinity)
 	if (tmp[layer].gainExp.lte(0)) return new Decimal(Infinity)
 
-	if (type=="static") 
+	if (type === "static") 
 	{
 		if (!tmp[layer].canBuyMax) canMax = false
 		let amt = player[layer].points.plus((canMax&&tmp[layer].baseAmount.gte(tmp[layer].nextAt))?tmp[layer].resetGain:0).div(tmp[layer].directMult)
@@ -58,22 +58,17 @@ export function getNextAt(layer, canMax=false, useType = null) {
 		let cost = extraCost.times(tmp[layer].requires).max(tmp[layer].requires)
 		if (tmp[layer].roundUpCost) cost = cost.ceil()
 		return cost;
-	} else if (type=="normal"){
+	} else if (type === "normal"){
 		let next = tmp[layer].resetGain.add(1).div(tmp[layer].directMult)
 		if (next.gte(tmp[layer].softcap)) next = next.div(tmp[layer].softcap.pow(decimalOne.sub(tmp[layer].softcapPower))).pow(decimalOne.div(tmp[layer].softcapPower))
 		next = next.root(tmp[layer].gainExp).div(tmp[layer].gainMult).root(tmp[layer].exponent).times(tmp[layer].requires).max(tmp[layer].requires)
 		if (tmp[layer].roundUpCost) next = next.ceil()
 		return next;
-	} else if (type=="custom"){
+	} else if (type === "custom"){
 		return layers[layer].getNextAt(canMax)
 	} else {
 		return decimalZero
-	}}
-
-export function softcap(value, cap, power = 0.5) {
-	if (value.lte(cap)) return value
-	else
-		return value.pow(power).times(cap.pow(decimalOne.sub(power)))
+	}
 }
 
 // Return true if the layer should be highlighted. By default checks for upgrades only.
@@ -320,25 +315,24 @@ export function autobuyUpgrades(layer){
 }
 
 export function gameLoop(diff) {
-	if (isEndgame() || tmp.gameEnded){
+	if (isEndgame() || tmp.gameEnded) {
 		tmp.gameEnded = true
-		clearParticles()
+		clearParticles();
 	}
 
-	if (isNaN(diff) || diff < 0) diff = 0
+	if (isNaN(diff) || diff < 0) diff = 0;
 	if (tmp.gameEnded && !player.keepGoing) {
-		diff = 0
-		//player.tab = "tmp.gameEnded"
-		clearParticles()
+		diff = 0;
+		clearParticles();
 	}
 
 	if (maxTickLength) {
-		let limit = maxTickLength()
+		let limit = maxTickLength();
 		if(diff > limit)
-			diff = limit
+			diff = limit;
 	}
-	addTime(diff)
-	player.points = player.points.add(tmp.pointGen.times(diff)).max(0)
+	addTime(diff);
+	player.points = player.points.add(tmp.pointGen.times(diff)).max(0);
 
 	for (let x = 0; x <= maxRow; x++){
 		for (item in TREE_LAYERS[x]) {
@@ -392,39 +386,88 @@ export function hardReset(resetOptions) {
 	window.location.reload();
 }
 
-export default class intervals {
-	stop() {
-		clearInterval(this.gameInterval)
-		clearInterval(this.canvas)
-	}
-
-	static getDeltaTime(realDiff) {
-		let now = Date.now()
-		let diff = (now - player.time) / 1e3
-		if (player.offTime !== undefined) {
-			if (player.offTime.remain > modInfo.offlineLimit * 3600) player.offTime.remain = modInfo.offlineLimit * 3600
-			if (player.offTime.remain > 0) {
-				let offlineDiff = Math.max(player.offTime.remain / 10, diff)
-				player.offTime.remain -= offlineDiff
-				diff += offlineDiff
-			}
-			if (!options.offlineProd || player.offTime.remain <= 0) player.offTime = undefined
+function getDeltaTime(realDiff) {
+	let now = Date.now()
+	let diff = (now - player.time) / 1000
+	if (player.offTime !== undefined) {
+		if (player.offTime.remain > modInfo.offlineLimit * 3600) player.offTime.remain = modInfo.offlineLimit * 3600
+		if (player.offTime.remain > 0) {
+			let offlineDiff = Math.max(player.offTime.remain / 10, diff)
+			player.offTime.remain -= offlineDiff
+			diff += offlineDiff
 		}
-		const trueDiff = diff
-		if (player.devSpeed) diff *= player.devSpeed
-		return (realDiff) && realDiff === true ? trueDiff : diff;
+		if (!options.offlineProd || player.offTime.remain <= 0) player.offTime = undefined
 	}
+	const trueDiff = diff
+	if (player.devSpeed) diff *= player.devSpeed
+	return Boolean(realDiff) && realDiff === true ? trueDiff : diff;
+}
 
-	static gameInterval = setInterval(() => {
+export const Intervals = (function() {
+	const interval = (handler, timeout) => {
+	  let id = -1;
+	  return {
+		start() {
+		  // This starts the interval if it isn't already started,
+		  // and throws an error if it is.
+		  if (this.isStarted) {
+			throw new Error("An already started interval cannot be started again.");
+		  } else {
+			id = setInterval(handler, typeof timeout === "function" ? timeout() : timeout);
+		  }
+		},
+		get isStarted() {
+		  return id !== -1;
+		},
+		stop() {
+		  // This stops the interval if it isn't already stopped,
+		  // and does nothing if it is already stopped.
+		  clearInterval(id);
+		  id = -1;
+		},
+		restart() {
+		  this.stop();
+		  this.start();
+		}
+	  };
+	};
+	return {
+	  // Not a getter because getter will cause stack overflow
+	  all() {
+		return Object.values(GameIntervals)
+		  .filter(i =>
+			Object.prototype.hasOwnProperty.call(i, "start") &&
+			Object.prototype.hasOwnProperty.call(i, "stop")
+		  );
+	  },
+	  start() {
+		// eslint-disable-next-line no-shadow
+		for (const interval of this.all()) {
+		  interval.start();
+		}
+	  },
+	  stop() {
+		// eslint-disable-next-line no-shadow
+		for (const interval of this.all()) {
+		  interval.stop();
+		}
+	  },
+	  restart() {
+		// eslint-disable-next-line no-shadow
+		for (const interval of this.all()) {
+		  interval.restart();
+		}
+	  },
+	  gameLoop: interval(() => {
 		if (player===undefined||tmp===undefined) return;
 		if (this.stopped) return;
 		if (tmp.gameEnded&&!player.keepGoing) return;
-		this.stopped = true
 		player.time = now
-		if (needCanvasUpdate){ resizeCanvas();
+		if (needCanvasUpdate) {
+			resizeCanvas();
 			needCanvasUpdate = false;
 		}
-		const diff = this.getDeltaTime(false);
+		const diff = getDeltaTime(false);
 		tmp.scrolled = document.getElementById('treeTab') && document.getElementById('treeTab').scrollTop > 30
 		updateTemp();
 		updateOomps(diff);
@@ -432,12 +475,20 @@ export default class intervals {
 		updateTabFormats()
 		gameLoop(diff)
 		fixNaNs()
-		adjustPopupTime(this.getDeltaTime(true))
-		updateParticles(this.getDeltaTime(true))
-		this.stopped = false
-	}, 50)
+		adjustPopupTime(getDeltaTime(true))
+		updateParticles(getDeltaTime(true))
+	}, 50),
+	  save: interval(() => {
+		if (player === undefined)
+			return;
+		if (tmp.gameEnded && !player.keepGoing)
+			return;
+		if (options.autosave)
+			save();
+		}, 5000),
+	  runEverySecond: interval(() => null, 1000),
+	  updateCanvas: interval(() => {needCanvasUpdate = true}, 100),
+	};
+  }());
 
-	static canvas = setInterval(() => {needCanvasUpdate = true}, 500)
-
-	static stopped = false
-}
+  window.Intervals = Intervals;

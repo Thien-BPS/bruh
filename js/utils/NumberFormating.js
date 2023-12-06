@@ -1,6 +1,6 @@
 import Decimal from "../technical/break_eternity.js"
 
-export function exponentialFormat(num, precision, mantissa = true) {
+function exponentialFormat(num, precision, mantissa = true) {
     let e = num.log10().floor()
     let m = num.div(Decimal.pow(10, e))
     if (m.toStringWithDecimalPlaces(precision) == 10) {
@@ -13,7 +13,7 @@ export function exponentialFormat(num, precision, mantissa = true) {
     else return "e" + e
 }
 
-export function commaFormat(num, precision) {
+function commaFormat(num, precision) {
     if (num === null || num === undefined) return "NaN"
     if (num.mag < 0.001) return (0).toFixed(precision)
     let init = num.toStringWithDecimalPlaces(precision)
@@ -24,18 +24,18 @@ export function commaFormat(num, precision) {
 }
 
 
-export function regularFormat(num, precision) {
+function regularFormat(num, precision) {
     if (num === null || num === undefined) return "NaN"
     if (num.mag < 0.0001) return (0).toFixed(precision)
     if (num.mag < 0.1 && precision !==0) precision = Math.max(precision, 4)
     return num.toStringWithDecimalPlaces(precision)
 }
 
-export function fixValue(x, y = 0) {
+function fixValue(x, y = 0) {
     return x || new Decimal(y)
 }
 
-export function sumValues(x) {
+function sumValues(x) {
     x = Object.values(x)
     if (!x[0]) return decimalZero
     return x.reduce((a, b) => Decimal.add(a, b))
@@ -49,7 +49,7 @@ export function sumValues(x) {
  * @returns {string}
  */
 
-export function format(decimal, precision = 2, small) {
+export default function format(decimal, precision = 2, small) {
     small = small || modInfo.allowSmall
     decimal = new Decimal(decimal)
     if (isNaN(decimal.sign) || isNaN(decimal.layer) || isNaN(decimal.mag)) {
@@ -57,7 +57,8 @@ export function format(decimal, precision = 2, small) {
         return "NaN"
     }
     if (decimal.sign < 0) return "-" + format(decimal.neg(), precision, small)
-    if (decimal.mag == Number.POSITIVE_INFINITY) return "Infinity"
+    if (decimal.mag === Number.POSITIVE_INFINITY) return "Infinity"
+    if (decimal.mag === Number.NEGATIVE_INFINITY) return "-Infinity"
     if (decimal.gte("eeee1000")) {
         var slog = decimal.slog()
         if (slog.gte(1e6)) return "F" + format(slog.floor())
@@ -89,11 +90,44 @@ export function formatWhole(decimal) {
 }
 
 export function formatTime(s) {
+    console.warn("Deprecated, use formatDecimalTime instead.");
+    s = new Decimal(s);
+    formatDecimalTime(s);
+    /*
     if (s < 60) return format(s) + "s"
     else if (s < 3600) return formatWhole(Math.floor(s / 60)) + "m " + format(s % 60) + "s"
     else if (s < 86400) return formatWhole(Math.floor(s / 3600)) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
     else if (s < 31536000) return formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
     else return formatWhole(Math.floor(s / 31536000)) + "y " + formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
+    */
+}
+
+export function formatDecimalTime(time, long) {
+    if (!(time instanceof Decimal)) time = new Decimal(time)
+    
+    if (time.lt(Number.MIN_VALUE)) return `1 / ${format(time.reciprocate())} s`;
+    if (time.lt(5.39121e-44)) return `${format(time.times(5.39121e-44).reciprocate())} tP`;
+    if (time.lt(0.001)) return `1 / ${format(time.times(1000).reciprocate())} ms`;
+    if (time.lt(0.01)) return `${format(time.times(100))} ms`;
+    if (time.lt(1)) return `${format(time.times(1000))} cs`;
+    if (time.lt(60)) return (long ? `${format(time)} seconds` : `${format(time)} s`);
+    if (time.lt(3600)) return (long ? `${format(time.div(60))}:${format(time.mod(60))}` : `${format(time.div(60))} m`);
+    if (time.lt(86400)) return (long
+        ? `${format(time.div(3600).floor())}:${format(time.div(60).floor().mod(60))}:${format(time.mod(60))}`
+        : `${format(time.div(3600))} h`
+    );
+    if (time.lt(31536000)) return (long
+        ? `${format(time.div(86400).floor())} days, ${format(time.div(3600).floor().mod(24))} hours`
+        : `${format(time.div(86400))} d`
+    );
+    if (time.lt(4.320432e17)) return (long
+        ? `${format(time.div(31536000).floor())} years, ${format(time.div(86400).floor().mod(365))} days, ${format(time.div(3600).floor().mod(24))} hours`
+        : `${format(time.div(31536000))} y`
+    );
+    return (long
+        ? `${format(time.div(4.320432e17).floor())} uni, ${format(time.div(31536000).floor().mod(4.320432e17))} years`
+        : `${format(time.div(4.320432e17))} universes`
+    );
 }
 
 export function toPlaces(x, precision, maxAccepted) {
@@ -110,7 +144,7 @@ export function formatSmall(x, precision=2) {
     return format(x, precision, true)    
 }
 
-export function invertOOM(x){
+function invertOOM(x){
     let e = x.log10().ceil()
     let m = x.div(Decimal.pow(10, e))
     e = e.neg()

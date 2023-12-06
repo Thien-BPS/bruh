@@ -252,7 +252,7 @@ function NaNcheck(data) {
 		}
 		else if (data[item] instanceof Decimal) {
 		}
-		else if ((!!data[item]) && (data[item].constructor === Object)) {
+		else if (Boolean(data[item]) && (data[item].constructor === Object)) {
 			NaNcheck(data[item]);
 		}
 	}
@@ -306,14 +306,6 @@ function versionCheck() {
 		player.beta = VERSION.beta;
 	}
 }
-var saveInterval = setInterval(function () {
-	if (player === undefined)
-		return;
-	if (tmp.gameEnded && !player.keepGoing)
-		return;
-	if (options.autosave)
-		save();
-}, 5000);
 
 window.onbeforeunload = () => {
     if (player.autosave) {
